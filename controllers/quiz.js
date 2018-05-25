@@ -153,3 +153,34 @@ exports.check = (req, res, next) => {
         answer
     });
 };
+
+exports.randomplay = (req, res, next) => {
+    if(req.session.randomplay === undefined)
+        req.session.randomplay = [];
+
+    var condicion = {"id": {[Sequelize.Op.notIn]: req.session.randomplay}};
+    return models.quiz.count({where: condicion})
+    .then (numQ => { //guardo el return anterior en una variable que se llama numQ y contiene los que quedan p`or preguntar
+        if(numQ === 0){
+            var puntuacion = req.session.randomplay.lenght;
+            req.session.randomplay = [];
+            res.render('quizzes/random_nomore', {score: puntuacion}); // a partir de la carpeta views/ direccion de la vista y luego lo que quieres sacar
+        }
+        var randomQuiz = Math.floor(Math.random()*numQ); //Id aleatoria del numero de quizzes que me queden
+        return models.quiz.findAll({where: condicion, limit:1, offset: randomQuiz}) //Buscas el quiz con la condicion porque qella sabe cuales has quitado, sacas solo uno (limit:1) y lo cargas con el numero randomQuiz
+        .then(quiz => { //coges el primer elemento del array que te devuelcve arriba
+            return quiz[0];
+    })
+    })
+    .then (quiz0 =>{ // una vez saquemos el quiz del p`rimer elemnto que queremos entonces ya podemos hacer el render
+                var puntuacion = req.session.randomplay.lenght;
+                res.render('quizzes/random_nomore', {quiz: quiz0, score: puntuacion});
+    }) 
+    .catch(err => {
+        console.log(err);
+    })
+};
+exports.randomcheck = (req, res, next) => {
+
+    
+};

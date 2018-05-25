@@ -21,11 +21,19 @@ sequelize.import(path.join(__dirname,'session'));
 
 // Create tables
 sequelize.sync()
-.then(() => console.log('Data Bases created successfully'))
-.catch(error => {
-    console.log("Error creating the data base tables:", error);
-    process.exit(1);
+.then(() => sequelize.models.quiz.count()) //accede a la propiedad model y cuento cuantos hay
+.then(count => { 
+	if(!count){ //si es 0 cojo y creo varios quizzes con bulkcreate
+		return sequelize.models.quiz.bulkCreate([ //pongo el return para que la promesa del then count espere a que se ejecute lo de abajo
+			{ question: "Capital de Italia", answer: "Roma" },
+			{ question: "Capital de Francia", answer: "París" },
+			{ question: "Capital de España", answer: "Madrid" },
+			{ question: "Capital de POrtugal", answer: "Lisboa" },
+		]);
+	}
+})
+.catch(error => { 
+	console.log(error);
 });
-
 
 module.exports = sequelize;
