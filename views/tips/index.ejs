@@ -21,6 +21,9 @@
                 <% } %>
 
                 <% if (isAdmin || isQuizAuthor) { %>
+                //p8
+                    <a href="/quizzes/<%= quizId %>/tips/<%= tip.id %>/edit?_method=GET">
+                        <button>Edit</button>
 
                     <a href="/quizzes/<%= quizId %>/tips/<%= tip.id %>?_method=DELETE">
                         <button>Delete</button>
