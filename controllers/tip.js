@@ -16,6 +16,7 @@ exports.load = (req, res, next, tipId) => {
     })
     .catch(error => next(error));
 };
+
 // GET /quizzes/:quizId/tips/new
 exports.new = (req, res, next) => {
 
@@ -23,7 +24,7 @@ exports.new = (req, res, next) => {
         text: ""
     };
 
-    const {quiz} = req;
+    const { quiz } = req;
 
     res.render('tips/new', {
         tip,
@@ -31,15 +32,18 @@ exports.new = (req, res, next) => {
     });
 };
 
-
 // POST /quizzes/:quizId/tips
 exports.create = (req, res, next) => {
+
+    const authorId = req.session.user && req.session.user.id || 0;
  
     const tip = models.tip.build(
         {
             text: req.body.text,
-            quizId: req.quiz.id
+            quizId: req.quiz.id,
+            authorId: authorId
         });
+    
 
     tip.save()
     .then(tip => {
@@ -87,47 +91,51 @@ exports.destroy = (req, res, next) => {
     })
     .catch(error => next(error));
 };
-exports.adminOrAuthorRequired = (req, res, next) =>{
-    const {tip, session} = req;
+
+// MW that allows actions only if the user logged in is admin or is the author of the quiz.
+exports.adminOrAuthorRequired = (req, res, next) => {
+    const { tip, session } = req;
 
     const isAuthor = tip.authorId === session.user.id;
     const isAdmin = session.user.isAdmin;
 
-    if(isAdmin || isAuthor){
+    if (isAdmin || isAuthor) {
         next();
-    }else{
+    } else {
         console.log('Prohibited operation: The logged in user is not the author of the quiz, nor an administrator.');
         res.send(403);
     }
-}
+};
 
-//GET /quizzes/tips/edit
-exports.edit = (req, res, next) => {        //tengo vista edit
+// GET /quizzes/:quizId/tips/:tipId/edit
+exports.edit = (req, res, next) => {
 
-    const {tip, quiz} = req;
+    const { tip, quiz } = req;
 
-    res.render('tips/edit.ejs', {tip, quiz});
-}
+    res.render('tips/edit.ejs', { tip, quiz });
+}; 
 
-//PUT /quizzes/tips
-exports.update = (req, res ,next) => {      //no tengo vista update, vuelto a la pagina antes de editar
 
-    const {tip, body} = req;        //body es lo que escribo en el formulario que se identifica por su 'name'
+// PUT /quizzes/:quizId/tips/:tipId
+exports.update = (req, res, next) => {
+
+    const { tip, body } = req; //cambiado
 
     tip.text = body.newtip;
 
-    tip.save({fields: ["text"]})
-    .then(tip => {
-        req.flash('success', 'Tip edited successfully.');
-        res.redirect('/goback');
-    })
-    .catch(Sequelize.ValidationError, error => {
-        req.flash('error', 'There are errors in the form:');
-        error.errors.forEach(({message}) => req.flash('error', message));
-        res.render('tips/edit', {tip});
-    })
-    .catch(error => {
-        req.flash('error', 'Error editing the Tip: ' + error.message);
-        next(error);
-    });    
-}
+    tip.save({ fields: ["text"] }) //cambiado text y tip
+        .then(tip => {
+            req.flash('success', 'Tip edited successfully.');
+            res.redirect('/goback');
+        })
+        .catch(Sequelize.ValidationError, error => {
+            req.flash('error', 'There are errors in the form:');
+            error.errors.forEach(({ message }) => req.flash('error', message));
+            res.render('tips/edit', { tip }); //
+        })
+        .catch(error => {
+            req.flash('error', 'Error editing the Tip: ' + error.message);
+            next(error);
+        });
+};
+
